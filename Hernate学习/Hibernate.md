@@ -170,3 +170,143 @@ session.getTransaction().commit();
 ```
 
 Restrictions对象
+
+```java
+方法名称 对应SQL中的表达式
+----------------------------------------------------------
+Restrictions.eq field = value
+Restrictions.gt field > value
+Restrictions.lt field < value
+Restrictions.ge field >= value
+Restrictions.le field <= value
+Restrictions.between field between value1 and value2
+Restrictions.in field in(…)
+Restrictions.and and
+Restrictions.or or
+Restrictions.like field like value
+
+```
+
+示例
+
+```java
+
+Criteria c = session.createCriteria(User.class);
+c.add(Restrictions.like("userName", "J"));
+c.add(Restrictions.eq("id", 120));
+c.add(Restrictions.or(Restrictions.eq("userName", "James"),
+Restrictions.eq("userName", "Alex")));
+```
+
+获取唯一记录
+
+```java
+
+session.beginTransaction();
+Criteria c = session.createCriteria(User.class);
+c.add(Restrictions.eq("id", 120));
+User user = (User) c.uniqueResult();
+System.out.println(user.getUserName());
+session.getTransaction().commit();
+```
+
+分页
+
+```java
+Criteria c = session.createCriteria(User.class);
+c.setFirstResult(0);
+c.setMaxResults(5);
+```
+
+分组与统计
+
+```java
+session.beginTransaction();
+Criteria c = session.createCriteria(User.class);
+c.setProjection(Projections.sum("id"));
+Object obj = c.uniqueResult();
+System.out.println(obj);
+session.getTransaction().commit();
+```
+
+Projections对象
+
+```java
+方法名称 描述
+-------------------------------------------------------
+Projections.sum 等于SQL中聚合函数sum
+Projections.avg 等于SQL中聚合函数avg
+Projections.count 等于SQL中聚合函数count
+Projections .distinct 去除重复记录
+Projections.max 等于SQL中聚合函数max
+Projections.min 等于SQL中聚合函数min
+Projections .groupProperty 对指定的属性进行分组查询
+```
+
+多个统计与分组
+
+```java
+session.beginTransaction();
+Criteria c = session.createCriteria(User.class);
+ProjectionList projectionList = Projections.projectionList();
+projectionList.add(Projections.sum("id"));
+projectionList.add(Projections.min("id"));
+c.setProjection(projectionList);
+// 和HQL一样，单列用Object，多列用Object[]
+Object[] obj = (Object[]) c.uniqueResult();
+System.out.println("sum:" + obj[0]);
+System.out.println("min:" + obj[1]);
+
+```
+
+排序
+
+```java
+Criteria c = session.createCriteria(User.class);
+c.addOrder(Order.desc("id"));
+```
+
+三、原生SQL查询：
+
+　　　　　　　　　　　　　　　　　　　　　　　示例
+
+```java
+session.beginTransaction();
+String sql = "select id,username,userpwd from t_user";
+List list = session.createSQLQuery(sql).list();
+for(Object item : list){
+Object[] rows = (Object[]) item;
+System.out.println("id:" + rows[0] + "username:"
++ rows[1] + "userpwd:" + rows[2]);
+}
+session.getTransaction().commit();
+```
+
+addEntity()示例
+
+```java
+
+session.beginTransaction();
+String sql = "select id,username,userpwd from t_user";
+// addEntity()可以告诉Hibernate你想要封装成对象的类型，然后自动为你封装
+SQLQuery query = session.createSQLQuery(sql).addEntity(User.class);
+List<User> list = query.list();
+for(User user : list){
+System.out.println(user.getUserName());
+}
+session.getTransaction().commit();
+
+```
+
+uniqueResult示例
+
+```java
+
+session.beginTransaction();
+String sql = "select id,username,userpwd from t_user where id = 2";
+SQLQuery query = session.createSQLQuery(sql).addEntity(User.class);
+User user = (User) query.uniqueResult();
+System.out.println(user.getUserName());
+session.getTransaction().commit();
+```
+
